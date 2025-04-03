@@ -1,0 +1,403 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const express = require('express');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+const { v4: uuid } = require('uuid');
+const hostname = '192.168.4.115';
+const port = 8160; //vaihda porttinumero!
+
+const app = express();
+
+const ERROR_EMAIL_MISSING = 'Sähköposti vaaditaan!';
+const ERROR_PASSWORD_MISSING = 'Salasana vaaditaan!';
+const EMAIL_NOT_FOUND = 'Sähköpostia ei löytynyt. Tarkista sähköposti tai rekisteröidy.';
+const INCORRECT_PASSWORD = 'Väärä salasana';
+const ADMIN_ONLY = 'Kirjaudu ylläpitäjänä päästäksesi tälle sivulle'
+
+
+//Set up body-parser. This will accept POST data and append them to the req object
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json()); //this will also accept JSON from the tests
+
+app.use(session({
+    secret: 'my-super-secret-key',
+    resave: false,
+    saveUninitialized: true
+}));
+
+function usersOnly(req, res, next) {
+    //Happy path, the request may pass through
+    if(req.session && req.session.user) return next();
+
+    //Unhappy path, the request is intercepted and rejected
+    return res.redirect('/login');
+}
+
+function adminsOnly(req, res, next) {
+    //Happy path, the request may pass through
+    if(req.session && req.session.user.role === 'admin') return next();
+
+    //Unhappy path, the request is intercepted and rejected
+    req.session.errors = [ADMIN_ONLY]
+    return res.redirect('/login');
+}
+
+//postgresql testailua
+const { Client } = require('pg');
+const client = new Client({
+	//user: '',
+    user: process.env.DATABASE_NAME,
+	password: process.env.DATABASE_PASSWORD,
+	//host: 'tie-tkannat.it.tuni.fi',
+    host: 'localhost',
+	port: '5432',
+	database: process.env.DATABASE_NAME,
+});
+
+client
+	.connect()
+	.then(() => {
+		console.log('Connected to PostgreSQL database');
+	})
+	.catch((err) => {
+		console.error('Error connecting to PostgreSQL database', err);
+	});
+
+// client.query('SELECT * FROM testi', (err, result) => {
+//     if (err) {
+//         console.error('Error executing query', err);
+//     } else {
+//         console.log('Query result:', result.rows);
+//     }
+//     });
+
+app.get('/register2', (req, res) => {
+    console.log("moimoiget")
+    console.log(req.body)
+});
+
+app.post('/register2', async (req, res) => {
+    console.log("moimoipost")
+    console.log(req.body)
+
+    let errors = [];
+
+    const { email, password, etunimi, sukunimi, osoite, kaupunki, postinumero, puh} = req.body;
+    const newUser = { email, password, etunimi, sukunimi, osoite, kaupunki, postinumero, puh}
+
+    const ERROR_NAME_MISSING = 'Name is required!';
+    //const ERROR_EMAIL_MISSING = 'Email is required!';
+    //const ERROR_PASSWORD_MISSING = 'Password is required!';
+    const ERROR_EMAIL_IN_USE = 'Email is already in use!';
+    //if(name.length === 0){
+    if(!newUser.etunimi || newUser.etunimi.trim() === ''){
+        console.log("moi")
+        errors.push(ERROR_NAME_MISSING)
+        //req.session.errors = [ERROR_EMAIL_IN_USE]
+    }
+    if(!newUser.sukunimi || newUser.sukunimi.trim() === ''){
+        console.log("moi")
+        errors.push(ERROR_NAME_MISSING)
+        //req.session.errors = [ERROR_EMAIL_IN_USE]
+    }
+    if(!newUser.email || newUser.email.trim() === ''){
+        errors.push(ERROR_EMAIL_MISSING)
+    }
+    if(!newUser.password || newUser.password.trim() === ''){
+        errors.push(ERROR_PASSWORD_MISSING)
+    }
+
+    // client
+	// .connect()
+	// .then(() => {
+	// 	console.log('Connected to PostgreSQL database register');
+	// })
+	// .catch((err) => {
+	// 	console.error('Error connecting to PostgreSQL database register', err);
+	// });
+
+    var last_id;
+    try {
+        const emails = await client.query('SELECT asiakas_id, email FROM asiakas')
+        console.log('Query result:', emails.rows);
+        console.log(emails.rows[emails.rows.length - 1]);
+        last_id = emails.rows[emails.rows.length - 1]['asiakas_id']
+        for(const row of emails.rows) {
+            if(row['email'] == email){
+                errors.push(ERROR_EMAIL_IN_USE)
+                req.session.errors = [ERROR_EMAIL_IN_USE]
+                return res.redirect('/register')
+            }
+        };
+    }catch (err){
+        console.error(err);
+    }
+    // finally{
+    //     await client.end()
+    // }
+
+    if(errors.length > 0) {
+        req.session.errors = errors
+        return res.redirect('/register')
+    }
+    console.log(last_id)
+    try {
+        const result = await client.query(
+            `INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) VALUES (${last_id + 1}, '${etunimi}', '${sukunimi}', '${osoite}', ${postinumero}, '${kaupunki}', '${email}', '${puh}', '${password}', 'user')`)
+        console.log('Query result:', result);
+    }catch (err){
+        console.error(err);
+        errors.push(err)
+        req.session.errors = errors
+        return res.redirect('/register')
+    }
+    // finally{
+    //     await client.end()
+    // }
+
+    //Generate a unique id for the new user, you can use uuid()
+    user_id = uuid()
+
+    newUser.role = "user"
+
+    req.session.user = newUser;
+
+    return res.redirect('/main')
+})
+
+
+app.get('/', (req, res) => {
+    fs.readFile(path.resolve('frontpage.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+});
+
+app.get('/register', (req, res) => {
+    const errors = req.session.errors || [];
+    delete req.session.errors;
+    console.log(errors);
+
+    fs.readFile(path.resolve('register.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage + errors);
+        }
+        res.end();
+    });
+});
+
+app.post('/login', async (req, res) => {
+    
+    let errors = [];
+
+    const { email, password } = req.body;
+    const user = { email, password}
+
+    console.log(req.body)
+    
+    if(!user.email || user.email.trim() === ''){
+        errors.push(ERROR_EMAIL_MISSING)
+    }
+    if(!user.password || user.password.trim() === ''){
+        errors.push(ERROR_PASSWORD_MISSING)
+    }
+
+    if(errors.length > 0) {
+        req.session.errors = errors
+        return res.redirect('/login')
+    }
+
+    // client
+	// .connect()
+	// .then(() => {
+	// 	console.log('Connected to PostgreSQL database login');
+	// })
+	// .catch((err) => {
+	// 	console.error('Error connecting to PostgreSQL database login', err);
+	// });
+
+    //var password_correct = false;
+    var email_found = false;
+    var role
+    try {
+        const emails_n_users = await client.query('SELECT email, salasana, rooli FROM asiakas')
+        console.log('Query result:', emails_n_users.rows);
+
+        for(const row of emails_n_users.rows) {
+            if(row['email'] == email){
+                console.log(row['salasana']);
+                console.log(password);
+
+                if(row['salasana'] != password){
+                    errors.push(INCORRECT_PASSWORD)
+                    req.session.errors = [INCORRECT_PASSWORD]
+                    return res.redirect('/login')
+                }
+                //errors.push(ERROR_EMAIL_IN_USE)
+                //req.session.errors = [ERROR_EMAIL_IN_USE]
+                email_found = true;
+                role = row['rooli']
+            }
+        };
+    }catch (err){
+        console.error(err);
+    }
+    // finally{
+    //     await client.end()
+    // }
+    // await client.end()
+
+
+    if(!email_found){
+        errors.push(EMAIL_NOT_FOUND)
+        req.session.errors = [EMAIL_NOT_FOUND]
+        return res.redirect('/login')
+    }
+
+    user_id = uuid()
+
+    if(role == 'admin'){
+        user.role = "admin"
+    }else{
+        user.role = "user"
+    }
+    //user.role = "user"
+
+    req.session.user = user;
+
+    return res.redirect('/main')
+})
+
+app.get('/login', (req, res) => {
+    const errors = req.session.errors || [];
+    delete req.session.errors;
+    console.log(errors);
+
+    fs.readFile(path.resolve('login.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage + errors);
+        }
+        res.end();
+    });
+
+
+});
+
+app.post('/add_books', async (req, res) => {
+    
+    let errors = [];
+
+    const { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta} = req.body;
+    const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta}
+
+    console.log(req.body)
+    
+
+    if(errors.length > 0) {
+        req.session.errors = errors
+        return res.redirect('/add_books')
+    }
+
+    var last_teos_id;
+    var isbn_found = false;
+    try {
+        const books = await client.query('SELECT teos_id, isbn FROM teos')
+        console.log('Query result:', books.rows);
+        last_teos_id = books.rows[books.rows.length - 1]['teos_id']
+        for(const row of books.rows) {
+            if(row['isbn'] == isbn){
+                isbn_found = true;
+            }
+        };
+    }catch (err){
+        console.error(err);
+    }
+
+    if(isbn_found){
+        //Teoksen isbn oli jo tietokannassa. Täytyy lisätä vain nide
+        try {
+            const result = await client.query(
+                `INSERT INTO nide (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) VALUES (${last_id + 1}, '${etunimi}', '${sukunimi}', '${osoite}', ${postinumero}, '${kaupunki}', '${email}', '${puh}', '${password}', 'user')`)
+            console.log('Query result:', result);
+        }catch (err){
+            console.error(err);
+            errors.push(err)
+            req.session.errors = errors
+            return res.redirect('/register')
+        }
+    }else{
+        //Teoksen isbn:ää ei ollut tietokannassa. Täytyy lisätä teos ja nide tietokantaan
+    }
+
+
+    return res.redirect('/add_books')
+})
+
+app.get('/search', usersOnly, (req, res) => {
+    fs.readFile(path.resolve('search.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+});
+
+
+
+app.get('/main', usersOnly, (req, res) => {
+    fs.readFile(path.resolve('main.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+});
+
+app.get('/add_books', adminsOnly, (req, res) => {
+    fs.readFile(path.resolve('add_books.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy();
+
+    return res.redirect('/login');
+});
+
+app.listen(port, function () {
+    console.log(
+        `server is running on port ${port}`
+    );
+})
