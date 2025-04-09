@@ -15,6 +15,7 @@ const ERROR_PASSWORD_MISSING = 'Salasana vaaditaan!';
 const EMAIL_NOT_FOUND = 'Sähköpostia ei löytynyt. Tarkista sähköposti tai rekisteröidy.';
 const INCORRECT_PASSWORD = 'Väärä salasana';
 const ADMIN_ONLY = 'Kirjaudu ylläpitäjänä päästäksesi tälle sivulle'
+const DIVARI_NOT_FOUND = 'Divaria ei löytynyt tietokannasta'
 
 
 //Set up body-parser. This will accept POST data and append them to the req object
@@ -65,6 +66,7 @@ client
 		console.error('Error connecting to PostgreSQL database', err);
 	});
 
+client.query('SET SEARCH_PATH TO keskusdivari')
 // client.query('SELECT * FROM testi', (err, result) => {
 //     if (err) {
 //         console.error('Error executing query', err);
@@ -122,8 +124,14 @@ app.post('/register2', async (req, res) => {
     try {
         const emails = await client.query('SELECT asiakas_id, email FROM asiakas')
         console.log('Query result:', emails.rows);
-        console.log(emails.rows[emails.rows.length - 1]);
-        last_id = emails.rows[emails.rows.length - 1]['asiakas_id']
+        //Jos ei ole yhtään rekisteröitynyttä käyttäjää
+        console.log(emails.rows.length)
+        if(emails.rows.length == 0){
+            last_id = 0;
+        }else{
+            console.log(emails.rows[emails.rows.length - 1]);
+            last_id = emails.rows[emails.rows.length - 1]['asiakas_id']
+        }
         for(const row of emails.rows) {
             if(row['email'] == email){
                 errors.push(ERROR_EMAIL_IN_USE)
@@ -303,20 +311,57 @@ app.post('/add_books', async (req, res) => {
     
     let errors = [];
 
-    const { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta} = req.body;
+    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta} = req.body;
     const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta}
 
+    console.log(dnimi)
     console.log(req.body)
-    
 
     if(errors.length > 0) {
         req.session.errors = errors
         return res.redirect('/add_books')
     }
 
-    var last_teos_id;
-    var isbn_found = false;
+    var divari_oma_kanta;
+    var divari_found = false;
+
     try {
+        const divarit = await client.query('SELECT nimi, oma_tietokanta FROM divari')
+        console.log('Query result:', divarit.rows);
+        for(const row of divarit.rows) {
+            if(row['nimi'] == dnimi){
+                divari_found = true;
+                divari_oma_kanta = row['oma_tietokanta']
+            }
+        };
+    }catch (err){
+        console.error(err);
+    }
+
+    console.log(divari_oma_kanta)
+    console.log(divari_found)
+
+    
+
+    if(!divari_found){
+        errors.push(DIVARI_NOT_FOUND)
+        req.session.errors = errors
+        return res.redirect('/add_books')
+    }
+
+    if(divari_oma_kanta){
+
+    }else{
+
+        var last_teos_id;
+        var isbn_found = false;
+
+
+    }
+
+    
+    try {
+        
         const books = await client.query('SELECT teos_id, isbn FROM teos')
         console.log('Query result:', books.rows);
         last_teos_id = books.rows[books.rows.length - 1]['teos_id']
@@ -378,13 +423,16 @@ app.get('/main', usersOnly, (req, res) => {
 });
 
 app.get('/add_books', adminsOnly, (req, res) => {
+    const errors = req.session.errors || [];
+    delete req.session.errors;
+    console.log(errors);
     fs.readFile(path.resolve('add_books.html'), function(error, htmlPage) {
         if (error) {
             res.writeHead(404);
             res.write('An error occured: ', error);
         } else {
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(htmlPage);
+            res.write(htmlPage + errors);
         }
         res.end();
     });
