@@ -202,23 +202,39 @@ FOREIGN KEY(tilaus_id) REFERENCES tilaus
 CREATE TABLE postikulut (
 postikulu_id INT,
 paino INT NOT NULL,
-hinta INT NOT NULL,
+hinta NUMERIC(5,2) NOT NULL,                        -- muutettu
 PRIMARY KEY (postikulu_id)
 );
 
 
-CREATE TABLE teosluokka(
-teos_id INT,
-luokka VARCHAR(15),
-PRIMARY KEY (teos_id, luokka),
-FOREIGN KEY (teos_id) REFERENCES teos
+CREATE TABLE teosluokka(                  -- MUUTETTU, UUSI
+teosluokka_id INT,                        
+luokka VARCHAR(15) NOT NULL,              
+PRIMARY KEY (teosluokka_id),
+UNIQUE (luokka)
 );
 
-CREATE TABLE teostyyppi(
-teos_id INT,
+CREATE TABLE kuuluuluokkaan (              -- UUSI TAULU!!!!!!!!!!
+teos_id INT, 
+teosluokka_id INT,
+PRIMARY KEY (teos_id, teosluokka_id),
+FOREIGN KEY (teos_id) REFERENCES teos,
+FOREIGN KEY (teosluokka_id) REFERENCES teosluokka
+);
+
+CREATE TABLE teostyyppi(                     -- MUUTETTU, UUSI
+teostyyppi_id INT,
 tyyppi VARCHAR(15),
-PRIMARY KEY (teos_id, tyyppi),
-FOREIGN KEY (teos_id) REFERENCES teos
+PRIMARY KEY (teostyyppi_id),
+UNIQUE (tyyppi)
+);
+
+CREATE TABLE kuuluutyyppiin (              -- UUSI TAULU!!!!!!!!!!
+teos_id INT, 
+teostyyppi_id INT,
+PRIMARY KEY (teos_id, teostyyppi_id),
+FOREIGN KEY (teos_id) REFERENCES teos,
+FOREIGN KEY (teostyyppi_id) REFERENCES teostyyppi
 );
 
 
@@ -238,10 +254,10 @@ UNIQUE (nimi)
 CREATE TABLE nide (
 nide_id INT,
 myyntihinta NUMERIC(8,2) NOT NULL,
-niteen_tila VARCHAR(10) NOT NULL,
+niteen_tila VARCHAR(10) NOT NULL,               -- myynnissä, myyty, ...!?
 sisaanostohinta NUMERIC(8,2),
-myyntipvm DATE NOT NULL,
-tilaus_id INT NOT NULL,
+myyntipvm DATE NOT NULL,                      -- ???? voiko olla NOT NULL
+tilaus_id INT NOT NULL,                      
 teos_id INT NOT NULL,
 divari_id INT NOT NULL,
 PRIMARY KEY (nide_id),
