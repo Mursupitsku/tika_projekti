@@ -14,8 +14,18 @@ const ERROR_EMAIL_MISSING = 'Sähköposti vaaditaan!';
 const ERROR_PASSWORD_MISSING = 'Salasana vaaditaan!';
 const EMAIL_NOT_FOUND = 'Sähköpostia ei löytynyt. Tarkista sähköposti tai rekisteröidy.';
 const INCORRECT_PASSWORD = 'Väärä salasana';
-const ADMIN_ONLY = 'Kirjaudu ylläpitäjänä päästäksesi tälle sivulle'
-const DIVARI_NOT_FOUND = 'Divaria ei löytynyt tietokannasta'
+const ADMIN_ONLY = 'Kirjaudu ylläpitäjänä päästäksesi tälle sivulle';
+const DIVARI_NOT_FOUND = 'Divaria ei löytynyt tietokannasta';
+const DIVARI_NAME_MISSING = 'Divarin nimi vaaditaan!';
+const ISBN_MISSING = 'ISBN vaaditaan!';
+const TEOS_NAME_MISSING = 'Teoksen nimi vaaditaan!';
+const AUTHOR_MISSING = 'Kirjoittaja vaaditaan!';
+const TYYPPI_MISSING = 'Kirjan tyyppi vaaditaan!';
+const LUOKKA_MISSING = 'Kirjan luokka vaaditaan!';
+const WEIGHT_MISSING = 'Kirjan paino vaaditaan!';
+const BUYPRICE_MISSING = 'Kirjan ostohinta vaaditaan!';
+const SELLPRICE_MISSING = 'Kirjan myyntihinta vaaditaan!';
+
 
 
 //Set up body-parser. This will accept POST data and append them to the req object
@@ -311,8 +321,21 @@ app.post('/add_books', async (req, res) => {
     
     let errors = [];
 
-    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta} = req.body;
-    const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta}
+    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta} = req.body;
+    const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta}
+
+    if(!dnimi || dnimi.trim() === ''){
+        errors.push(DIVARI_NAME_MISSING)
+    }
+    if(!isbn || isbn.trim() === ''){
+        errors.push(ISBN_MISSING)
+    }
+    if(!ostohinta || ostohinta.trim() === ''){
+        errors.push(BUYPRICE_MISSING)
+    }
+    if(!myyntihinta || myyntihinta.trim() === ''){
+        errors.push(SELLPRICE_MISSING)
+    }
 
     console.log(dnimi)
     console.log(req.body)
@@ -324,14 +347,16 @@ app.post('/add_books', async (req, res) => {
 
     var divari_oma_kanta;
     var divari_found = false;
+    var divari_id;
 
     try {
-        const divarit = await client.query('SELECT nimi, oma_tietokanta FROM divari')
+        const divarit = await client.query('SELECT divari_id, nimi, oma_tietokanta FROM divari')
         console.log('Query result:', divarit.rows);
         for(const row of divarit.rows) {
             if(row['nimi'] == dnimi){
                 divari_found = true;
                 divari_oma_kanta = row['oma_tietokanta']
+                divari_id = row['divari_id']
             }
         };
     }catch (err){
@@ -341,8 +366,6 @@ app.post('/add_books', async (req, res) => {
     console.log(divari_oma_kanta)
     console.log(divari_found)
 
-    
-
     if(!divari_found){
         errors.push(DIVARI_NOT_FOUND)
         req.session.errors = errors
@@ -350,24 +373,19 @@ app.post('/add_books', async (req, res) => {
     }
 
     if(divari_oma_kanta){
-
-    }else{
-
-        var last_teos_id;
-        var isbn_found = false;
-
-
+        client.query('SET SEARCH_PATH TO d1')
     }
 
-    
+    var isbn_found = false;
+    var teos_id;
     try {
         
         const books = await client.query('SELECT teos_id, isbn FROM teos')
         console.log('Query result:', books.rows);
-        last_teos_id = books.rows[books.rows.length - 1]['teos_id']
         for(const row of books.rows) {
             if(row['isbn'] == isbn){
                 isbn_found = true;
+                teos_id = row['teos_id']
             }
         };
     }catch (err){
@@ -378,16 +396,50 @@ app.post('/add_books', async (req, res) => {
         //Teoksen isbn oli jo tietokannassa. Täytyy lisätä vain nide
         try {
             const result = await client.query(
-                `INSERT INTO nide (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) VALUES (${last_id + 1}, '${etunimi}', '${sukunimi}', '${osoite}', ${postinumero}, '${kaupunki}', '${email}', '${puh}', '${password}', 'user')`)
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${teos_id}', ${divari_id})`)
             console.log('Query result:', result);
         }catch (err){
             console.error(err);
             errors.push(err)
             req.session.errors = errors
-            return res.redirect('/register')
+            return res.redirect('/add_books')
         }
     }else{
         //Teoksen isbn:ää ei ollut tietokannassa. Täytyy lisätä teos ja nide tietokantaan
+        //Tarkistetaan onko annettu luokka, tyyppi, tekijä, paino
+        if(!luokka || luokka.trim() === ''){
+            errors.push(LUOKKA_MISSING)
+        }
+        if(!tyyppi || tyyppi.trim() === ''){
+            errors.push(TYYPPI_MISSING)
+        }
+        if(!tekija || tekija.trim() === ''){
+            errors.push(BUYPRICE_MISSING)
+        }
+        if(!paino || paino.trim() === ''){
+            errors.push(WEIGHT_MISSING)
+        }
+
+        if(errors.length > 0) {
+            req.session.errors = errors
+            if(divari_oma_kanta){
+                client.query('SET SEARCH_PATH TO keskusdivari')
+            }
+            return res.redirect('/add_books')
+        }
+
+        //Lisätään teos
+        try {
+            const result = await client.query(
+                `INSERT INTO teos (nimi, tekija, isbn, paino) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}')`)
+            console.log('Query result:', result);
+        }catch (err){
+            console.error(err);
+            errors.push(err)
+            req.session.errors = errors
+            return res.redirect('/add_books')
+        }
+
     }
 
 
