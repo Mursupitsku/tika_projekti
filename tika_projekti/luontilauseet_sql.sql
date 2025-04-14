@@ -3,6 +3,12 @@
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
 VALUES (6, 'yrjö', 'ylläpitäjä', 'norsunluutorni 1', 12345, 'Helsinki', 'admin@admin.com', '04069696969', 'admin', 'admin');
 
+INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
+VALUES (1, 'testi', 'testi', 'testikatu 1', 22222, 'Tampere', 'testi@testi.com', '04069696969', 'testi', 'user');
+
+INSERT INTO divari (nimi, osoite, web_sivu, oma_tietokanta)
+VALUES ('testidivari', 'testikatu 1', 'www.google.com', false);
+
 CREATE TABLE teos ( 
 
 teos_id SERIAL PRIMARY KEY, 
@@ -225,7 +231,7 @@ FOREIGN KEY (teos_id) REFERENCES teos
 
 
 CREATE TABLE divari (
-divari_id INT,
+divari_id SERIAL,
 nimi VARCHAR(20) NOT NULL,
 osoite VARCHAR(20),
 web_sivu VARCHAR(20),
