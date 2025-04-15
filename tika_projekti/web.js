@@ -321,7 +321,7 @@ app.post('/add_books', async (req, res) => {
     
     let errors = [];
 
-    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta} = req.body;
+    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta} = req.body;
     const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta}
 
     if(!dnimi || dnimi.trim() === ''){
@@ -429,16 +429,44 @@ app.post('/add_books', async (req, res) => {
         }
 
         //Lisätään teos
+        var inserted_teos_id;
         try {
             const result = await client.query(
-                `INSERT INTO teos (nimi, tekija, isbn, paino) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}')`)
+                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka}', ${tyyppi}) RETURNING teos_id`)
             console.log('Query result:', result);
+            inserted_teos_id = result.rows[0]['teos_id']
         }catch (err){
             console.error(err);
             errors.push(err)
             req.session.errors = errors
             return res.redirect('/add_books')
         }
+        
+        //Lisätään teos luokka ja tyyppi tauluihin
+        try {
+            const luokkaresult = await client.query(
+                `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka}) RETURNING teos_id`)
+            console.log('Query result:', result);
+            const tyyppiresult = await client.query(
+                `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tekija}') RETURNING teos_id`)
+            inserted_teos_id = result.rows[0]['teos_id']
+        }catch (err){
+            console.error(err);
+            errors.push(err)
+            req.session.errors = errors
+            return res.redirect('/add_books')
+        }
+
+        //Lisätään nide
+        try {
+            const result = await client.query(
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${teos_id}', ${divari_id})`)
+            console.log('Query result:', result);
+        }catch (err){
+            console.error(err);
+            errors.push(err)
+            req.session.errors = errors
+            return res.redirect('/add_books')
 
     }
 

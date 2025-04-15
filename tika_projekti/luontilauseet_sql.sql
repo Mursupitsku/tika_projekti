@@ -185,7 +185,11 @@ tekija VARCHAR(15),
 vuosi INT,
 isbn VARCHAR(15),
 paino INT NOT NULL,
-PRIMARY KEY (teos_id)
+tyyppi_id INT NOT NULL,
+luokka_id INT NOT NULL,
+PRIMARY KEY (teos_id),
+--FOREIGN KEY(tyyppi_id) REFERENCES teostyyppi,
+--FOREIGN KEY(luokka_id) REFERENCES teosluokka
 );
 
 
@@ -258,12 +262,12 @@ UNIQUE (nimi)
 
 
 CREATE TABLE nide (
-nide_id INT,
+nide_id SERIAL,									--Serial parempi
 myyntihinta NUMERIC(8,2) NOT NULL,
-niteen_tila VARCHAR(10) NOT NULL,               -- myynnissä, myyty, ...!?
+niteen_tila VARCHAR(10) NOT NULL,               -- myynnissä, myyty, ...!? --vapaa/varattu
 sisaanostohinta NUMERIC(8,2),
-myyntipvm DATE NOT NULL,                      -- ???? voiko olla NOT NULL
-tilaus_id INT NOT NULL,                      
+myyntipvm DATE NOT NULL,                      -- ???? voiko olla NOT NULL --Pitää olla null ennen kuin on myyty
+tilaus_id INT,                      --Null kun nide ei liity vielä tilaukseen
 teos_id INT NOT NULL,
 divari_id INT NOT NULL,
 PRIMARY KEY (nide_id),
