@@ -6,6 +6,13 @@ VALUES (6, 'yrjö', 'ylläpitäjä', 'norsunluutorni 1', 12345, 'Helsinki', 'adm
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
 VALUES (1, 'testi', 'testi', 'testikatu 1', 22222, 'Tampere', 'testi@testi.com', '04069696969', 'testi', 'user');
 
+INSERT INTO teosluokka (teosluokka_id, luokka)
+VALUES (1, 'testiluokka');
+
+INSERT INTO teostyyppi (teostyyppi_id, tyyppi)
+VALUES (1, 'testityyppi');
+
+
 INSERT INTO divari (nimi, osoite, web_sivu, oma_tietokanta)
 VALUES ('testidivari', 'testikatu 1', 'www.google.com', false);
 
@@ -86,7 +93,7 @@ PRIMARY KEY (asiakas_id)
 );
 
 CREATE TABLE tilaus (
-tilaus_id INT,
+tilaus_id SERIAL,
 tilauspvm DATE NOT NULL,
 asiakas_id INT NOT NULL,
 PRIMARY KEY (tilaus_id),
@@ -94,7 +101,7 @@ FOREIGN KEY(asiakas_id) REFERENCES asiakas
 );
 
 CREATE TABLE lahetys (
-lahetys_id INT,
+lahetys_id SERIAL,
 toimituspvm DATE NOT NULL,
 tilaus_id INT NOT NULL,
 PRIMARY KEY (lahetys_id),
@@ -138,11 +145,11 @@ PRIMARY KEY (teos_id)
 
 
 CREATE TABLE nide (
-nide_id INT,
+nide_id SERIAL,
 myyntihinta NUMERIC(8,2) NOT NULL,
 niteen_tila VARCHAR(10) NOT NULL,
 sisaanostohinta NUMERIC(8,2),
-myyntipvm DATE NOT NULL,
+myyntipvm DATE,
 tilaus_id INT NOT NULL,
 teos_id INT NOT NULL,
 divari_id INT NOT NULL,
@@ -187,14 +194,12 @@ isbn VARCHAR(15),
 paino INT NOT NULL,
 tyyppi_id INT NOT NULL,
 luokka_id INT NOT NULL,
-PRIMARY KEY (teos_id),
---FOREIGN KEY(tyyppi_id) REFERENCES teostyyppi,
---FOREIGN KEY(luokka_id) REFERENCES teosluokka
+PRIMARY KEY (teos_id)
 );
 
 
 CREATE TABLE tilaus (
-tilaus_id INT,
+tilaus_id SERIAL,
 tilauspvm DATE NOT NULL,
 asiakas_id INT NOT NULL,
 PRIMARY KEY (tilaus_id),
@@ -202,7 +207,7 @@ FOREIGN KEY(asiakas_id) REFERENCES asiakas
 );
 
 CREATE TABLE lahetys (
-lahetys_id INT,
+lahetys_id SERIAL,
 toimituspvm DATE NOT NULL,
 tilaus_id INT NOT NULL,
 PRIMARY KEY (lahetys_id),
@@ -266,7 +271,7 @@ nide_id SERIAL,									--Serial parempi
 myyntihinta NUMERIC(8,2) NOT NULL,
 niteen_tila VARCHAR(10) NOT NULL,               -- myynnissä, myyty, ...!? --vapaa/varattu
 sisaanostohinta NUMERIC(8,2),
-myyntipvm DATE NOT NULL,                      -- ???? voiko olla NOT NULL --Pitää olla null ennen kuin on myyty
+myyntipvm DATE,                      -- ???? voiko olla NOT NULL --Pitää olla null ennen kuin on myyty
 tilaus_id INT,                      --Null kun nide ei liity vielä tilaukseen
 teos_id INT NOT NULL,
 divari_id INT NOT NULL,

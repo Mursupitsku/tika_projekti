@@ -318,11 +318,19 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/add_books', async (req, res) => {
-    
+    console.log("----------------")
     let errors = [];
+    console.log(req.body);
+    var {dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta} = req.body;
+    //const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta}
+    console.log(dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta);
 
-    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta} = req.body;
-    const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta}
+
+    ohinta = parseFloat(ohinta);
+    mhinta = parseFloat(mhinta);
+    //tyyppi_id = parseInt(tyyppi_id);
+    //luokka_id = parseInt(luokka_id);
+    console.log(tyyppi_id, luokka_id);
 
     if(!dnimi || dnimi.trim() === ''){
         errors.push(DIVARI_NAME_MISSING)
@@ -330,12 +338,18 @@ app.post('/add_books', async (req, res) => {
     if(!isbn || isbn.trim() === ''){
         errors.push(ISBN_MISSING)
     }
-    if(!ostohinta || ostohinta.trim() === ''){
+    if(ohinta <= 0){
         errors.push(BUYPRICE_MISSING)
     }
-    if(!myyntihinta || myyntihinta.trim() === ''){
+    if(mhinta <= 0){
         errors.push(SELLPRICE_MISSING)
     }
+    // if(!ohinta || ohinta.trim() === ''){
+    //     errors.push(BUYPRICE_MISSING)
+    // }
+    // if(!mhinta || mhinta.trim() === ''){
+    //     errors.push(SELLPRICE_MISSING)
+    // }
 
     console.log(dnimi)
     console.log(req.body)
@@ -383,9 +397,14 @@ app.post('/add_books', async (req, res) => {
         const books = await client.query('SELECT teos_id, isbn FROM teos')
         console.log('Query result:', books.rows);
         for(const row of books.rows) {
+            console.log(row);
+            console.log("forloop");
+            console.log(row['teos_id']);
+            console.log(row['isbn']);
             if(row['isbn'] == isbn){
+                console.log("iffi");
                 isbn_found = true;
-                teos_id = row['teos_id']
+                teos_id = row['teos_id'];
             }
         };
     }catch (err){
@@ -407,10 +426,10 @@ app.post('/add_books', async (req, res) => {
     }else{
         //Teoksen isbn:ää ei ollut tietokannassa. Täytyy lisätä teos ja nide tietokantaan
         //Tarkistetaan onko annettu luokka, tyyppi, tekijä, paino
-        if(!luokka || luokka.trim() === ''){
+        if(luokka_id <= 0){
             errors.push(LUOKKA_MISSING)
         }
-        if(!tyyppi || tyyppi.trim() === ''){
+        if(tyyppi_id <= 0){
             errors.push(TYYPPI_MISSING)
         }
         if(!tekija || tekija.trim() === ''){
@@ -431,8 +450,9 @@ app.post('/add_books', async (req, res) => {
         //Lisätään teos
         var inserted_teos_id;
         try {
+            console.log(nimi, tekija, isbn, paino, luokka_id, tyyppi_id);
             const result = await client.query(
-                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka}', ${tyyppi}) RETURNING teos_id`)
+                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka_id}', ${tyyppi_id}) RETURNING teos_id`)
             console.log('Query result:', result);
             inserted_teos_id = result.rows[0]['teos_id']
         }catch (err){
@@ -445,12 +465,12 @@ app.post('/add_books', async (req, res) => {
         //Lisätään teos luokka ja tyyppi tauluihin
         try {
             const luokkaresult = await client.query(
-                `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka}) RETURNING teos_id`)
-            console.log('Query result:', result);
+                `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka_id}) RETURNING teos_id`)
+            console.log('Query result:', luokkaresult);
             const tyyppiresult = await client.query(
-                `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tekija}') RETURNING teos_id`)
-            inserted_teos_id = result.rows[0]['teos_id']
-        }catch (err){
+                `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tyyppi_id}') RETURNING teos_id`)
+            console.log('Query result:', tyyppiresult);
+            }catch (err){
             console.error(err);
             errors.push(err)
             req.session.errors = errors
@@ -460,16 +480,23 @@ app.post('/add_books', async (req, res) => {
         //Lisätään nide
         try {
             const result = await client.query(
-                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${teos_id}', ${divari_id})`)
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
             console.log('Query result:', result);
         }catch (err){
             console.error(err);
             errors.push(err)
             req.session.errors = errors
             return res.redirect('/add_books')
+        }
+
+        if(divari_oma_kanta){
+            client.query('SET SEARCH_PATH TO keskusdivari')
+        }
 
     }
 
+    errors.push("Kirja lisätty onnistuneesti");
+    req.session.errors = errors
 
     return res.redirect('/add_books')
 })
