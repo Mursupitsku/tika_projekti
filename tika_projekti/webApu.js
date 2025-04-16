@@ -1,3 +1,4 @@
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -7,8 +8,22 @@ const bodyParser = require('body-parser');
 const { v4: uuid } = require('uuid');
 const hostname = '192.168.4.115';
 const port = 8160; //vaihda porttinumero!
+//const hostname = 'localhost';
+//const port = 3000; //vaihda porttinumero!
 
 const app = express();
+
+// ---------------------------!!!!!!!!!!!!!!!!!!!!!
+const { engine } = require('express-handlebars');
+
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+//app.set('views', './views');
+
+
+// ---------------------------!!!!!!!!!!!!!!!!!!!!!
+
+
 
 const ERROR_EMAIL_MISSING = 'Sähköposti vaaditaan!';
 const ERROR_PASSWORD_MISSING = 'Salasana vaaditaan!';
@@ -58,7 +73,7 @@ function adminsOnly(req, res, next) {
 //postgresql testailua               // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const { Client } = require('pg');
 const client = new Client({
-    //user: '',
+	//user: '',
     user: process.env.DATABASE_NAME,
 	password: process.env.DATABASE_PASSWORD,
 	//host: 'tie-tkannat.it.tuni.fi',
@@ -482,7 +497,16 @@ app.post('/add_books', async (req, res) => {
 
 
 
+
+
+
+/*  ---------------------------------------   HAKU  --------------------------------------------- */
+
+
+
 app.get('/search', usersOnly, (req, res) => {
+    res.render('searchHome');
+    /*
     fs.readFile(path.resolve('search.html'), function(error, htmlPage) {
         if (error) {
             res.writeHead(404);
@@ -493,11 +517,11 @@ app.get('/search', usersOnly, (req, res) => {
         }
         res.end();
     });
+    */
 });
 
 
-app.post('/search', usersOnly, async (req, res) => {
-    
+app.post('/search', usersOnly, async (req, res) => {    
     let data = [];
 
     console.log(req.body)
@@ -507,15 +531,14 @@ app.post('/search', usersOnly, async (req, res) => {
     console.log(hakukohde);
 
     try {
-        client.query('SET SEARCH_PATH TO keskusdivari')   //!!!!!!!!!
+        client.query('SET SEARCH_PATH TO keskusdivari')   
 
-        /*
+         /*
         const text = 'SELECT * FROM teos WHERE $1 LIKE $2'
         hakusana = '%' + hakusana + '%'
         console.log(hakusana);
         const values = [hakukohde, hakusana]
         */
-
         //const text = 'SELECT * FROM teos WHERE nimi LIKE \'%ja%\' '
         const text = 'SELECT * FROM teos WHERE nimi LIKE $1'
         hakusana = '%' + hakusana + '%'
@@ -527,20 +550,63 @@ app.post('/search', usersOnly, async (req, res) => {
         //const result = client.query(text)
         //const result = client.query('SELECT * FROM teos_tyyppi_luokka')
         //const result = await client.query(text)
+        
         const result = await client.query(text, values)
         
         data = result.rows;
         console.log(data);
 
         console.log('tuleeko mitaan');
-
+        
         res.status(200);
-        res.json(data);
+        //res.json(data);
+        //res.render('basicSearch');
+        res.render('basicSearch', {tiedot: data } );  
+
+    }catch (err){
+        console.error(err);
+        console.log(err);
+        //res.json(data);
+        // res.render('searchHome');   !!!!!!!!!!!!! 
+    }
+});
+
+
+app.get('/data', usersOnly, async (req, res) => {
+    
+    //let data = [];
+
+    //let searchword = req.body;
+    //console.log(searchword);
+
+    try {
+        client.query('SET SEARCH_PATH TO keskusdivari')   
+
+
+        const result = await client.query('SELECT * FROM teos')
+        
+        res.status(200);
+        res.json(result.rows);
+
 
     }catch (err){
         console.error(err);
     }
 });
+
+app.get('/order', usersOnly, (req, res) => {                  // POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    fs.readFile(path.resolve('order.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+});
+
 
 
 

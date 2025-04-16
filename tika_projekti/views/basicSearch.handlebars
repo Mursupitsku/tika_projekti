@@ -1,0 +1,19 @@
+
+
+<h1>HAUN TULOKSET</h1>
+
+<div class="hakutulokset">
+
+  {{#each tiedot}}
+  <div class="hakutulos">
+    <p>{{nimi}}, {{tekija}}, {{vuosi}}, {{isbn}} </p>
+    {{{paino}}}<br>
+    <br>
+    <form method="GET" action="/order" >        
+      <button>tilaa</button>
+    </form>
+   </div>  
+  {{/each}}
+</div>
+
+
