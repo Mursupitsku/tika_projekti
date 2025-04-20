@@ -1,4 +1,3 @@
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -20,8 +19,9 @@ app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 //app.set('views', './views');
 
-
+const sql = require(__dirname + '/sql/sqlcommands');
 // ---------------------------!!!!!!!!!!!!!!!!!!!!!
+
 
 
 
@@ -82,6 +82,7 @@ const client = new Client({
 	database: process.env.DATABASE_NAME,
 });
 
+
 client
 	.connect()
 	.then(() => {
@@ -91,9 +92,8 @@ client
 		console.error('Error connecting to PostgreSQL database', err);
 	});
 
+
 //client.query('SET SEARCH_PATH TO keskusdivari')          // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 
 // client.query('SELECT * FROM testi', (err, result) => {
 //     if (err) {
@@ -236,6 +236,8 @@ app.get('/register', (req, res) => {
 
 app.post('/login', async (req, res) => {
     client.query('SET SEARCH_PATH TO keskusdivari')   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
     let errors = [];
 
     const { email, password } = req.body;
@@ -336,11 +338,19 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/add_books', async (req, res) => {
-    
+    console.log("----------------")
     let errors = [];
+    console.log(req.body);
+    var {dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta} = req.body;
+    //const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta}
+    console.log(dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta);
 
-    const {dnimi, nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta} = req.body;
-    const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ostohinta, myyntihinta}
+
+    ohinta = parseFloat(ohinta);
+    mhinta = parseFloat(mhinta);
+    //tyyppi_id = parseInt(tyyppi_id);
+    //luokka_id = parseInt(luokka_id);
+    console.log(tyyppi_id, luokka_id);
 
     if(!dnimi || dnimi.trim() === ''){
         errors.push(DIVARI_NAME_MISSING)
@@ -348,12 +358,18 @@ app.post('/add_books', async (req, res) => {
     if(!isbn || isbn.trim() === ''){
         errors.push(ISBN_MISSING)
     }
-    if(!ostohinta || ostohinta.trim() === ''){
+    if(ohinta <= 0){
         errors.push(BUYPRICE_MISSING)
     }
-    if(!myyntihinta || myyntihinta.trim() === ''){
+    if(mhinta <= 0){
         errors.push(SELLPRICE_MISSING)
     }
+    // if(!ohinta || ohinta.trim() === ''){
+    //     errors.push(BUYPRICE_MISSING)
+    // }
+    // if(!mhinta || mhinta.trim() === ''){
+    //     errors.push(SELLPRICE_MISSING)
+    // }
 
     console.log(dnimi)
     console.log(req.body)
@@ -401,9 +417,14 @@ app.post('/add_books', async (req, res) => {
         const books = await client.query('SELECT teos_id, isbn FROM teos')
         console.log('Query result:', books.rows);
         for(const row of books.rows) {
+            console.log(row);
+            console.log("forloop");
+            console.log(row['teos_id']);
+            console.log(row['isbn']);
             if(row['isbn'] == isbn){
+                console.log("iffi");
                 isbn_found = true;
-                teos_id = row['teos_id']
+                teos_id = row['teos_id'];
             }
         };
     }catch (err){
@@ -425,10 +446,10 @@ app.post('/add_books', async (req, res) => {
     }else{
         //Teoksen isbn:ää ei ollut tietokannassa. Täytyy lisätä teos ja nide tietokantaan
         //Tarkistetaan onko annettu luokka, tyyppi, tekijä, paino
-        if(!luokka || luokka.trim() === ''){
+        if(luokka_id <= 0){
             errors.push(LUOKKA_MISSING)
         }
-        if(!tyyppi || tyyppi.trim() === ''){
+        if(tyyppi_id <= 0){
             errors.push(TYYPPI_MISSING)
         }
         if(!tekija || tekija.trim() === ''){
@@ -449,8 +470,9 @@ app.post('/add_books', async (req, res) => {
         //Lisätään teos
         var inserted_teos_id;
         try {
+            console.log(nimi, tekija, isbn, paino, luokka_id, tyyppi_id);
             const result = await client.query(
-                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka}', ${tyyppi}) RETURNING teos_id`)
+                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka_id}', ${tyyppi_id}) RETURNING teos_id`)
             console.log('Query result:', result);
             inserted_teos_id = result.rows[0]['teos_id']
         }catch (err){
@@ -463,12 +485,12 @@ app.post('/add_books', async (req, res) => {
         //Lisätään teos luokka ja tyyppi tauluihin
         try {
             const luokkaresult = await client.query(
-                `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka}) RETURNING teos_id`)
-            console.log('Query result:', result);
+                `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka_id}) RETURNING teos_id`)
+            console.log('Query result:', luokkaresult);
             const tyyppiresult = await client.query(
-                `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tekija}') RETURNING teos_id`)
-            inserted_teos_id = result.rows[0]['teos_id']
-        }catch (err){
+                `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tyyppi_id}') RETURNING teos_id`)
+            console.log('Query result:', tyyppiresult);
+            }catch (err){
             console.error(err);
             errors.push(err)
             req.session.errors = errors
@@ -478,7 +500,7 @@ app.post('/add_books', async (req, res) => {
         //Lisätään nide
         try {
             const result = await client.query(
-                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${teos_id}', ${divari_id})`)
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
             console.log('Query result:', result);
         }catch (err){
             console.error(err);
@@ -486,130 +508,36 @@ app.post('/add_books', async (req, res) => {
             req.session.errors = errors
             return res.redirect('/add_books')
         }
+
+        if(divari_oma_kanta){
+            client.query('SET SEARCH_PATH TO keskusdivari')
+        }
+
     }
 
+    errors.push("Kirja lisätty onnistuneesti");
+    req.session.errors = errors
 
     return res.redirect('/add_books')
-});
+})
 
 
 
-
-
-
-
-
-
-/*  ---------------------------------------   HAKU  --------------------------------------------- */
-
-
-
-app.get('/search', usersOnly, (req, res) => {
-    res.render('searchHome');
-    /*
-    fs.readFile(path.resolve('search.html'), function(error, htmlPage) {
+app.get('/add_books', adminsOnly, (req, res) => {
+    const errors = req.session.errors || [];
+    delete req.session.errors;
+    console.log(errors);
+    fs.readFile(path.resolve('add_books.html'), function(error, htmlPage) {
         if (error) {
             res.writeHead(404);
             res.write('An error occured: ', error);
         } else {
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(htmlPage);
-        }
-        res.end();
-    });
-    */
-});
-
-
-app.post('/search', usersOnly, async (req, res) => {    
-    let data = [];
-
-    console.log(req.body)
-    let hakusana = req.body.hakutermi;
-    let hakukohde = req.body.radAnswer;
-    console.log(hakusana);
-    console.log(hakukohde);
-
-    try {
-        client.query('SET SEARCH_PATH TO keskusdivari')   
-
-         /*
-        const text = 'SELECT * FROM teos WHERE $1 LIKE $2'
-        hakusana = '%' + hakusana + '%'
-        console.log(hakusana);
-        const values = [hakukohde, hakusana]
-        */
-        //const text = 'SELECT * FROM teos WHERE nimi LIKE \'%ja%\' '
-        const text = 'SELECT * FROM teos WHERE nimi LIKE $1'
-        hakusana = '%' + hakusana + '%'
-        console.log(hakusana);
-        const values = [hakusana]
-        
-
-        //const result = await client.query(sqlquery)
-        //const result = client.query(text)
-        //const result = client.query('SELECT * FROM teos_tyyppi_luokka')
-        //const result = await client.query(text)
-        
-        const result = await client.query(text, values)
-        
-        data = result.rows;
-        console.log(data);
-
-        console.log('tuleeko mitaan');
-        
-        res.status(200);
-        //res.json(data);
-        //res.render('basicSearch');
-        res.render('basicSearch', {tiedot: data } );  
-
-    }catch (err){
-        console.error(err);
-        console.log(err);
-        //res.json(data);
-        // res.render('searchHome');   !!!!!!!!!!!!! 
-    }
-});
-
-
-app.get('/data', usersOnly, async (req, res) => {
-    
-    //let data = [];
-
-    //let searchword = req.body;
-    //console.log(searchword);
-
-    try {
-        client.query('SET SEARCH_PATH TO keskusdivari')   
-
-
-        const result = await client.query('SELECT * FROM teos')
-        
-        res.status(200);
-        res.json(result.rows);
-
-
-    }catch (err){
-        console.error(err);
-    }
-});
-
-app.get('/order', usersOnly, (req, res) => {                  // POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    fs.readFile(path.resolve('order.html'), function(error, htmlPage) {
-        if (error) {
-            res.writeHead(404);
-            res.write('An error occured: ', error);
-        } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(htmlPage);
+            res.write(htmlPage + errors);
         }
         res.end();
     });
 });
-
-
-
-
 
 
 
@@ -629,21 +557,140 @@ app.get('/main', usersOnly, (req, res) => {
     });
 });
 
-app.get('/add_books', adminsOnly, (req, res) => {
-    const errors = req.session.errors || [];
-    delete req.session.errors;
-    console.log(errors);
-    fs.readFile(path.resolve('add_books.html'), function(error, htmlPage) {
+//app.get('/adminstate1', usersOnly, (req, res) => {
+app.get('/adminstate1', adminsOnly, (req, res) => {
+    res.status(200);
+    res.render('adminHome');
+});
+
+
+
+
+
+
+app.get('/search', usersOnly, (req, res) => {
+    res.status(200);
+    res.render('searchHome');
+    /*
+    fs.readFile(path.resolve('search.html'), function(error, htmlPage) {
         if (error) {
             res.writeHead(404);
             res.write('An error occured: ', error);
         } else {
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(htmlPage + errors);
+            res.write(htmlPage);
         }
         res.end();
     });
+    */
 });
+
+
+app.post('/search', usersOnly, async (req, res) => {    
+    let data = [];
+
+    let hakusana = req.body.hakutermi;
+    let hakukohde = req.body.radAnswer;
+
+    try {
+        client.query('SET SEARCH_PATH TO keskusdivari')   
+
+        hakusana = '%' + hakusana + '%'
+        const text = sql[hakukohde]
+        const values = [hakusana]
+        const result = await client.query(text, values) 
+        data = result.rows;  
+
+        const luokat = await client.query( sql["luokat"] ) 
+        const tyypit = await client.query( sql["tyypit"] ) 
+
+        for (let i = 0; i < data.length; i++) {
+            temp_luokat = [];
+            temp_tyypit = [];
+
+            for (let j = 0; j < luokat.rows.length; j++) {   
+              if (data[i].teos_id == luokat.rows[j].teos_id) {
+                temp_luokat.push(luokat.rows[j].luokka)
+              } 
+            }         
+            data[i].luokat = temp_luokat;
+
+            for (let j = 0; j < tyypit.rows.length; j++) {        
+              if (data[i].teos_id == tyypit.rows[j].teos_id) {
+                 temp_tyypit.push(tyypit.rows[j].tyyppi)
+              } 
+            }           
+            data[i].tyypit = temp_tyypit;
+        } 
+      
+        res.status(200);
+        //res.json(data);
+        res.render('basicSearch', {tiedot: data } );  
+
+    }catch (err){
+        console.error(err);
+        console.log(err);
+        //res.json(data);
+        // res.render('searchHome');   !!!!!!!!!!!!! 
+    }
+});
+
+
+//app.get('/raport', usersOnly, (req, res) => {
+app.get('/raport', adminsOnly, (req, res) => {
+    res.render('raportHome');  
+
+});
+
+//app.get('/raport1', usersOnly, async (req, res) => {    
+app.get('/raport1', adminsOnly, async (req, res) => {    
+    let data = [];
+
+    try {
+        client.query('SET SEARCH_PATH TO keskusdivari')   
+
+        const text = sql["R2raport1"]
+        const result = await client.query(text) 
+        data = result.rows;  
+
+        res.status(200);
+        //res.json(data);
+        res.render('raport1', {tiedot: data } );  
+
+    }catch (err){
+        console.error(err);
+        console.log(err);
+        //res.json(data);
+        // res.render('searchHome');   !!!!!!!!!!!!! 
+    }
+});
+
+
+app.get('/order', usersOnly, (req, res) => {                  // POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // lisätään tkhaku!
+
+
+    res.status(200);
+    res.render('orderHome');  
+    /*
+    fs.readFile(path.resolve('order.html'), function(error, htmlPage) {
+        if (error) {
+            res.writeHead(404);
+            res.write('An error occured: ', error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(htmlPage);
+        }
+        res.end();
+    });
+    */
+});
+
+
+
+
+
+
 
 app.post('/logout', (req, res) => {
     req.session.destroy();
@@ -651,8 +698,11 @@ app.post('/logout', (req, res) => {
     return res.redirect('/login');
 });
 
+
 app.listen(port, function () {
     console.log(
         `server is running on port ${port}`
     );
 })
+
+

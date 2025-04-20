@@ -1,4 +1,34 @@
 
-<h2></h2>
+
+<h1>Haku myynnissä oleviin teoksiin:</h1>
+
+<form action="/search" method="POST">
+    <label for="hakutermi">Hakusana:</label>
+    <input type="text" id="hakutermi1" name="hakutermi"><br><br>
+
+    <br> 
+
+     <fieldset>
+        <legend>Valitse hakukohde:</legend>
+        <div>
+        <input type="radio" id="valinta1" name="radAnswer" value="nimihaku" checked="checked">
+        <label for="valinta1">Teoksen nimi</label>
+        
+        <input type="radio" id="valinta2" name="radAnswer"  value="tekijahaku" >
+        <label for="valinta2">Teoksen tekijä</label>
+        
+        <input type="radio" id="valinta3" name="radAnswer" value="tyyppihaku" >
+        <label for="valinta3">Teoksen tyyppi</label>
+
+        <input type="radio" id="valinta4" name="radAnswer"  value="luokkahaku" >
+        <label for="valinta4">Teoksen luokka</label>          
+            
+        </div>
+    </fieldset>
+    <br> 
+        
+    <input type="submit" value="Submit">
+</form>
 
 
+<h1>Haku kaikkiin teoksiin:</h1>

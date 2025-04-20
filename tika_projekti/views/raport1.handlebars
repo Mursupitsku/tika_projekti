@@ -1,0 +1,26 @@
+<br>
+<a href='/adminstate1'>Palaa raporttietusivulle</a>
+
+<h1>Yhteenvetoraportti</h1>
+<h2> R2: myynnissä olevien teosten ryhmittely niiden luokan mukaan, sekäluokkien teosten kokonaismyyntihinta 
+ja keskihinta. </h2>
+
+<div class="raportti1">
+
+  {{#if tiedot }}
+
+    {{#each tiedot}}
+    <div class="raporttitulos">
+        <p>Teosluokka: <b>{{luokka}}</b>,        lukumäärä: {{lkm}},  kokonaismyyntihinta: {{sum}},  keskihinta: <b>{{avg}} </b></p>
+
+    </div>  
+    {{/each}}
+
+
+  {{else}}
+  <p> <b> Ei näytettäviä tuloksia.</b></p>
+  {{/if}}
+
+</div>
+
+

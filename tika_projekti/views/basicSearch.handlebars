@@ -1,19 +1,42 @@
 
+<br>
+<a href='/search'>Palaa hakuun</a>
 
 <h1>HAUN TULOKSET</h1>
 
 <div class="hakutulokset">
 
-  {{#each tiedot}}
-  <div class="hakutulos">
-    <p>{{nimi}}, {{tekija}}, {{vuosi}}, {{isbn}} </p>
-    {{{paino}}}<br>
-    <br>
-    <form method="GET" action="/order" >        
-      <button>tilaa</button>
-    </form>
-   </div>  
-  {{/each}}
+  {{#if tiedot }}
+    
+    {{#each tiedot}}
+    <div class="hakutulos">
+      <p>Nimi: <b>{{nimi}} </b>, tekijä: <b>{{tekija}}</b>, vuosi: {{vuosi}}, ISBN: {{isbn}}, myyntihinta: <b>{{myyntihinta}} euroa</b>, 
+        myyvä divari: <b>{{divarinimi}} </b></p>
+
+      <small>Luokat: 
+      {{#each luokat}}
+        <b> {{this}} </b>, 
+      {{/each}}
+      </small>
+
+      <small>Tyypit: 
+      {{#each tyypit}}
+          <b> {{this}} </b>, 
+      {{/each}}
+      </small>
+
+      <form method="GET" action="/order" >  
+        <button>Lisää tilaukseen</button>
+      </form>
+    </div>  
+
+    {{/each}}
+
+
+{{else}}
+  <p> <b> Ei tuloksia. Tarkista hakutiedot.</b></p>
+{{/if}}
+
 </div>
 
 
