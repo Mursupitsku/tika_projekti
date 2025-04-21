@@ -2,16 +2,21 @@
 /* 
 NÄKYMÄT
 */
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+-- T4
+-- //ks. R1basic
+
+
 
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 -- R1: Anna haun tulokset, jotka toteuttavat annetut kriteerit (ks. hakutoiminnot). 
-
+-- //T4
 
 -- R1basic
 CREATE VIEW keskusdivari.R1basic AS
   SELECT keskusdivari.teos.teos_id, keskusdivari.teos.nimi, keskusdivari.teos.tekija, keskusdivari.teos.vuosi, 
          keskusdivari.teos.isbn, keskusdivari.nide.myyntihinta, keskusdivari.divari.nimi AS divarinimi, 
-         keskusdivari.nide.nide_id
+         keskusdivari.nide.nide_id, keskusdivari.teos.paino
   FROM keskusdivari.teos, keskusdivari.nide, keskusdivari.divari 
   WHERE keskusdivari.teos.teos_id = keskusdivari.nide.teos_id AND 
         keskusdivari.nide.divari_id = keskusdivari.divari.divari_id AND
@@ -57,6 +62,7 @@ CREATE VIEW keskusdivari.R1tyyppihaku AS
 
 
 
+
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 -- R2: Ryhmittele myynnissä olevat teokset niiden luokan mukaan. Anna luokkien teosten kokonaismyyntihinta 
 -- sekä keskihinta. 
@@ -76,6 +82,13 @@ CREATE VIEW keskusdivari.R2all AS
         keskusdivari.teos.teos_id = keskusdivari.kuuluuluokkaan.teos_id AND
         keskusdivari.teos.teos_id = keskusdivari.nide.teos_id;
 
+
+
+
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+-- R3: Tee keskustietokannasta raportti, johon on listattu kaikki asiakkaat, sekä näiden viime vuonna ostamien 
+-- teosten lukumäärä. (Älä kiinnitä vuosilukua vaan laske se.) Raportin pitää olla CSV-muotoinen, jossa 
+-- erotinmerkki on puolipiste, jotta se on avattavissa Excelissä
 
 
 

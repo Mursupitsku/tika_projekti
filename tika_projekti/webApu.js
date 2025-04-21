@@ -72,6 +72,7 @@ function adminsOnly(req, res, next) {
 
 //postgresql testailua               // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const { Client } = require('pg');
+const { nidehaku } = require('./sql/sqlcommands');
 const client = new Client({
 	//user: '',
     user: process.env.DATABASE_NAME,
@@ -667,8 +668,10 @@ app.get('/raport1', adminsOnly, async (req, res) => {
 
 
 app.get('/order', usersOnly, (req, res) => {                  // POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // lisätään tkhaku!
+    //
 
+    let id = res.body;
+    console.log(id)
 
     res.status(200);
     res.render('orderHome');  
@@ -686,10 +689,48 @@ app.get('/order', usersOnly, (req, res) => {                  // POST!!!!!!!!!!!
     */
 });
 
+app.post('/order', usersOnly, async (req, res) => {    
+    
+    console.log(req.body.postId);
+    let nideId = req.body.postId;
+    nideId = parseInt(nideId);
+
+    //res.render('orderHome');  
+
+    try {
+        client.query('SET SEARCH_PATH TO keskusdivari')   
+
+        const nidetext = sql["nidehaku"]
+        const values = [nideId]
+        const result = await client.query(nidetext, values) 
+        //const result = await client.query('SELECT * FROM keskusdivari.R1basic WHERE keskusdivari.R1basic.nide_id = $1',values);
+    
+        let data = result.rows;  
+        console.log(data);
+      
+        res.status(200);
+        //res.json(data);
+        res.render('orderHome', {tiedot: data } );   
+
+    }catch (err){
+        console.error(err);
+        console.log(err);
+        //res.json(data);
+        // res.render('searchHome');   !!!!!!!!!!!!! 
+    }
+
+});
 
 
+app.post('/ordered', (req, res) => {
+     console.log("tilaus vahvistettu")
+    
+    console.log(req.body.postId);
 
-
+    // TEHDÄÄN TILAUS TIETOKANTAAN!??
+    //res.render('orderHome', {tiedot: data } );   
+    res.render('orderHome');  
+});
 
 
 app.post('/logout', (req, res) => {

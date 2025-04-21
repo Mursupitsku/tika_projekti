@@ -25,10 +25,11 @@
       {{/each}}
       </small>
 
-      <form method="GET" action="/order" >  
-        <button>Lisää tilaukseen</button>
-      </form>
-    </div>  
+  <form method="POST" action='/order'>
+      <input type="hidden" id="postId" name="postId" value={{nide_id}} />
+      <button type="submit">Lisää tilaukseen</button> 
+    </form>
+
 
     {{/each}}
 
