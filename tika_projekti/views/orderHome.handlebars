@@ -9,7 +9,7 @@
 
 <div class="tilaustiedot">
 
-  {{#if tiedot }}
+{{#if tiedot }}
     
     {{#each tiedot}}
     <div class="tilaustulos">
@@ -25,7 +25,8 @@
 
     {{/each}}
 
-
+{{else if tilausvahvistus}}
+  <p> <b>Tilaus onnistui</b></p>
 {{else}}
   <p> <b> </b></p>
 {{/if}}
