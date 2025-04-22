@@ -110,7 +110,7 @@ nide_id SERIAL PRIMARY KEY,
 myyntihinta NUMERIC(8,2) NOT NULL,
 niteen_tila VARCHAR(10) NOT NULL,               -- myynnissä, myyty, ...!?
 sisaanostohinta NUMERIC(8,2),
-myyntipvm DATE DEFAULT CURRENT_DATE,            -- NOT NULL !?                      -
+myyntipvm DATE,            -- NOT NULL !?  --Ei voi olla defaulttia, koska nidettä lisätessä laittaa automaattisesti myyntipäivän
 tilaus_id INT,                                   -- NOT NULL !?   
 teos_id INT NOT NULL,
 divari_id INT NOT NULL,

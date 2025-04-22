@@ -432,16 +432,23 @@ app.post('/add_books', async (req, res) => {
             }
         };
     }catch (err){
+        if(divari_oma_kanta){
+            client.query('SET SEARCH_PATH TO keskusdivari')
+        }
         console.error(err);
+
     }
 
     if(isbn_found){
         //Teoksen isbn oli jo tietokannassa. Täytyy lisätä vain nide
         try {
             const result = await client.query(
-                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${teos_id}', ${divari_id})`)
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${teos_id}', ${divari_id})`)
             console.log('Query result:', result);
         }catch (err){
+            if(divari_oma_kanta){
+                client.query('SET SEARCH_PATH TO keskusdivari')
+            }
             console.error(err);
             errors.push(err)
             req.session.errors = errors
@@ -476,10 +483,13 @@ app.post('/add_books', async (req, res) => {
         try {
             console.log(nimi, tekija, isbn, paino, luokka_id, tyyppi_id);
             const result = await client.query(
-                `INSERT INTO teos (nimi, tekija, isbn, paino, luokka_id, tyyppi_id) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}', '${luokka_id}', ${tyyppi_id}) RETURNING teos_id`)
+                `INSERT INTO teos (nimi, tekija, isbn, paino) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}') RETURNING teos_id`)
             console.log('Query result:', result);
             inserted_teos_id = result.rows[0]['teos_id']
         }catch (err){
+            if(divari_oma_kanta){
+                client.query('SET SEARCH_PATH TO keskusdivari')
+            }
             console.error(err);
             errors.push(err)
             req.session.errors = errors
@@ -495,18 +505,24 @@ app.post('/add_books', async (req, res) => {
                 `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tyyppi_id}') RETURNING teos_id`)
             console.log('Query result:', tyyppiresult);
             }catch (err){
-            console.error(err);
-            errors.push(err)
-            req.session.errors = errors
-            return res.redirect('/add_books')
+                if(divari_oma_kanta){
+                    client.query('SET SEARCH_PATH TO keskusdivari')
+                }
+                console.error(err);
+                errors.push(err)
+                req.session.errors = errors
+                return res.redirect('/add_books')
         }
 
         //Lisätään nide
         try {
             const result = await client.query(
-                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'vapaa', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
+                `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
             console.log('Query result:', result);
         }catch (err){
+            if(divari_oma_kanta){
+                client.query('SET SEARCH_PATH TO keskusdivari')
+            }
             console.error(err);
             errors.push(err)
             req.session.errors = errors
@@ -517,6 +533,9 @@ app.post('/add_books', async (req, res) => {
             client.query('SET SEARCH_PATH TO keskusdivari')
         }
 
+    }
+    if(divari_oma_kanta){
+        client.query('SET SEARCH_PATH TO keskusdivari')
     }
 
     errors.push("Kirja lisätty onnistuneesti");
@@ -726,9 +745,9 @@ app.post('/order', usersOnly, async (req, res) => {
 
 
 app.post('/ordered', usersOnly, async(req, res) => {
-    console.log("tilaus vahvistettu")
-    console.log(req.session.user)
-    console.log(req.body.postId);
+    
+    //console.log(req.session.user)
+    //console.log(req.body.postId);
 
     // TEHDÄÄN TILAUS TIETOKANTAAN!??
     try {
@@ -736,11 +755,7 @@ app.post('/ordered', usersOnly, async(req, res) => {
 
         const result = await client.query(
             `INSERT INTO tilaus (asiakas_id) VALUES (${req.session.user.databaseId}) RETURNING tilaus_id`)
-        console.log(result)
-        console.log(result.rows[0]['tilaus_id'])
-        console.log(req.body.postId[0])
-        console.log(req.body.postId)
-        client.query(`UPDATE nide SET niteen_tila='myyty', tilaus_id=${result.rows[0]['tilaus_id']} WHERE nide_id = ${req.body.postId}`)   
+        client.query(`UPDATE nide SET niteen_tila='myyty', tilaus_id=${result.rows[0]['tilaus_id']}, myyntipvm=current_date WHERE nide_id = ${req.body.postId}`)   
 
     }catch (err){
         console.error(err);
@@ -748,6 +763,7 @@ app.post('/ordered', usersOnly, async(req, res) => {
         //res.json(data);
         // res.render('searchHome');   !!!!!!!!!!!!! 
     }
+    console.log("tilaus vahvistettu")
 
     //res.render('orderHome', {tiedot: data } );   
     res.render('orderHome');  
