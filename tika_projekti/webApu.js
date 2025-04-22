@@ -197,6 +197,7 @@ app.post('/register2', async (req, res) => {
     //Generate a unique id for the new user, you can use uuid()
     user_id = uuid()
 
+    newUser.databaseId = last_id + 1
     newUser.role = "user"
 
     req.session.user = newUser;
@@ -270,8 +271,9 @@ app.post('/login', async (req, res) => {
     //var password_correct = false;
     var email_found = false;
     var role
+    //var databaseUserId
     try {
-        const emails_n_users = await client.query('SELECT email, salasana, rooli FROM asiakas')
+        const emails_n_users = await client.query('SELECT email, salasana, rooli, asiakas_id FROM asiakas')
         console.log('Query result:', emails_n_users.rows);
 
         for(const row of emails_n_users.rows) {
@@ -288,6 +290,7 @@ app.post('/login', async (req, res) => {
                 //req.session.errors = [ERROR_EMAIL_IN_USE]
                 email_found = true;
                 role = row['rooli']
+                user.databaseId = row['asiakas_id']
             }
         };
     }catch (err){
@@ -722,12 +725,30 @@ app.post('/order', usersOnly, async (req, res) => {
 });
 
 
-app.post('/ordered', (req, res) => {
-     console.log("tilaus vahvistettu")
-    
+app.post('/ordered', usersOnly, async(req, res) => {
+    console.log("tilaus vahvistettu")
+    console.log(req.session.user)
     console.log(req.body.postId);
 
     // TEHDÄÄN TILAUS TIETOKANTAAN!??
+    try {
+        client.query('SET SEARCH_PATH TO keskusdivari')   
+
+        const result = await client.query(
+            `INSERT INTO tilaus (asiakas_id) VALUES (${req.session.user.databaseId}) RETURNING tilaus_id`)
+        console.log(result)
+        console.log(result.rows[0]['tilaus_id'])
+        console.log(req.body.postId[0])
+        console.log(req.body.postId)
+        client.query(`UPDATE nide SET niteen_tila='myyty', tilaus_id=${result.rows[0]['tilaus_id']} WHERE nide_id = ${req.body.postId}`)   
+
+    }catch (err){
+        console.error(err);
+        console.log(err);
+        //res.json(data);
+        // res.render('searchHome');   !!!!!!!!!!!!! 
+    }
+
     //res.render('orderHome', {tiedot: data } );   
     res.render('orderHome');  
 });
