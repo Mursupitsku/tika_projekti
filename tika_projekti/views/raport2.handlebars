@@ -1,0 +1,26 @@
+<br>
+<a href='/adminstate1'>Palaa raporttietusivulle</a>
+
+<h1>Yhteenvetoraportti asiakkaista</h1>
+<h3> R3: asiakasraportti, johon on listattu kaikki asiakkaat, sekä näiden viime vuonna ostamien 
+teosten lukumäärä. ( CSV-muotoinen) </h3>
+
+
+<div class="raportti2">
+
+  {{#if tiedot }}
+
+    {{#each tiedot}}
+    <div class="raporttitulos">
+        <p>Asiakas: <b>{{etunimi}} {{sukunimi}} ( {{asiakas_id}} )</b>,           viime vuonna ostamien 
+        teosten lukumäärä: <b>{{lkm}} </b></p>
+
+    </div>  
+    {{/each}}
+
+
+  {{else}}
+  <p> <b> Ei näytettäviä tuloksia.</b></p>
+  {{/if}}
+
+</div>

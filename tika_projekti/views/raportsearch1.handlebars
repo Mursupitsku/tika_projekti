@@ -1,0 +1,39 @@
+
+
+<br>
+<a href='/adminstate1'>Palaa admin-etusivulle</a>
+
+<h1>HAUN TULOKSET</h1>
+
+<div class="hakutulokset">
+
+  {{#if tiedot }}
+    
+    {{#each tiedot}}
+    <div class="hakutulos">
+      <p>Nimi: <b>{{nimi}} </b>, tekijä: <b>{{tekija}}</b>, vuosi: {{vuosi}}, ISBN: {{isbn}}, paino: <b>{{paino}} </b> </p>
+      <small>Luokat: 
+      {{#each luokat}}
+        <b> {{this}} </b>, 
+      {{/each}}
+      </small>
+
+      <small>Tyypit: 
+      {{#each tyypit}}
+          <b> {{this}} </b>, 
+      {{/each}}
+      </small>
+
+    <br>
+    <br>
+
+    {{/each}}
+
+
+{{else}}
+  <p> <b> Ei tuloksia. Tarkista hakutiedot.</b></p>
+{{/if}}
+
+</div>
+
+

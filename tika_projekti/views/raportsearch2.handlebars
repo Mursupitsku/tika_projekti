@@ -1,0 +1,26 @@
+
+<br>
+<a href='/adminstate1'>Palaa admin-etusivulle</a>
+
+<h1>ASIAKKAAT</h1>
+
+<div class="hakutulokset">
+
+  {{#if tiedot }}
+    
+    {{#each tiedot}}
+    <div class="hakutulos">
+      <p>Asiakas_id: <b>{{asiakas_id}} </b>, nimi: <b>{{etunimi}} {{sukunimi}} </b>, rooli: {{rooli}} </p> 
+      <p> osoite: <b>{{postinumero}} {{postitoimipaikka}} </b>, sähköposti: <b>{{email}}</b>, puhelin: <b>{{puhelin}} </b> </p>
+
+
+    <br>
+
+    {{/each}}
+
+
+{{else}}
+  <p> <b> Ei tuloksia.</b></p>
+{{/if}}
+
+</div>
