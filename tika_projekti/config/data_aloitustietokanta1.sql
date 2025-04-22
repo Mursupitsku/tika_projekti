@@ -271,7 +271,7 @@ INSERT INTO nide (nide_id, myyntihinta, niteen_tila, sisaanostohinta, myyntipvm,
 VALUES (15, 33.50, 'myyty', 15.50,  '2025-03-02', 5, 7, 1);
 
 INSERT INTO nide (nide_id, myyntihinta, niteen_tila, sisaanostohinta, myyntipvm, tilaus_id, teos_id, divari_id) 
-VALUES (16, 32.50, 'myyty', 13.00,  '2025-03-02', 5, 7, 1);
+VALUES (16, 32.50, 'myyty', 13.00,  '2025-04-02', 5, 7, 1);
 
 
 
@@ -280,4 +280,5 @@ VALUES (16, 32.50, 'myyty', 13.00,  '2025-03-02', 5, 7, 1);
 INSERT INTO nide (nide_id, myyntihinta, niteen_tila, sisaanostohinta, myyntipvm, tilaus_id, teos_id, divari_id) 
 VALUES (17, 18.50, 'myynnissä', 1.50, NULL, NULL, 1, 3);
 
-
+INSERT INTO nide (nide_id, myyntihinta, niteen_tila, sisaanostohinta, myyntipvm, tilaus_id, teos_id, divari_id) 
+VALUES (18, 12.50, 'myynnissä', 7.50, NULL, NULL, 7, 1);

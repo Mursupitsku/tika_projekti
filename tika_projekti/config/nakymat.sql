@@ -2,10 +2,6 @@
 /* 
 NÄKYMÄT
 */
--- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
--- T4
--- //ks. R1basic
-
 
 
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -62,6 +58,16 @@ CREATE VIEW keskusdivari.R1tyyppihaku AS
 
 
 
+--Hae kaikki teokset
+CREATE VIEW keskusdivari.R1raport AS
+  SELECT keskusdivari.teos.teos_id, keskusdivari.teos.nimi, keskusdivari.teos.tekija, keskusdivari.teos.vuosi, 
+         keskusdivari.teos.isbn, keskusdivari.nide.myyntihinta, keskusdivari.divari.nimi AS divarinimi, 
+         keskusdivari.teos.paino
+  FROM keskusdivari.teos, keskusdivari.nide, keskusdivari.divari 
+  WHERE keskusdivari.teos.teos_id = keskusdivari.nide.teos_id AND 
+        keskusdivari.nide.divari_id = keskusdivari.divari.divari_id; 
+
+
 
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 -- R2: Ryhmittele myynnissä olevat teokset niiden luokan mukaan. Anna luokkien teosten kokonaismyyntihinta 
@@ -91,9 +97,43 @@ CREATE VIEW keskusdivari.R2all AS
 -- erotinmerkki on puolipiste, jotta se on avattavissa Excelissä
 
 
+CREATE VIEW keskusdivari.R3 AS
+  SELECT keskusdivari.nide.nide_id, keskusdivari.nide.niteen_tila, keskusdivari.nide.myyntipvm, 
+        keskusdivari.asiakas.asiakas_id, keskusdivari.asiakas.etunimi, keskusdivari.asiakas.sukunimi
+  FROM  keskusdivari.nide, keskusdivari.tilaus, keskusdivari.asiakas
+  WHERE keskusdivari.nide.tilaus_id = keskusdivari.tilaus.tilaus_id AND
+        keskusdivari.tilaus.asiakas_id = keskusdivari.asiakas.asiakas_id AND
+        keskusdivari.nide.niteen_tila = 'myyty' AND
+        keskusdivari.nide.myyntipvm > current_date-365;
+
+/*
+CREATE VIEW keskusdivari.R3 AS
+  SELECT keskusdivari.nide.nide_id, keskusdivari.nide.niteen_tila, keskusdivari.nide.myyntipvm, 
+        keskusdivari.asiakas.asiakas_id, keskusdivari.asiakas.etunimi, keskusdivari.asiakas.sukunimi
+  FROM  keskusdivari.nide, keskusdivari.tilaus, keskusdivari.asiakas
+  WHERE keskusdivari.nide.tilaus_id = keskusdivari.tilaus.tilaus_id AND
+        keskusdivari.tilaus.asiakas_id = keskusdivari.asiakas.asiakas_id AND
+        keskusdivari.nide.niteen_tila = 'myyty';
+*/
+
+
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+-- R4: 
+
+
 
 
 -- -----------------------------------------------------------
+
+/*
+
+SELECT *
+FROM keskusdivari.R3;
+
+
+SELECT keskusdivari.R3.asiakas_id, keskusdivari.R3.etunimi, keskusdivari.R3.sukunimi, COUNT(*) AS lkm FROM keskusdivari.R3 GROUP By keskusdivari.R3.asiakas_id, keskusdivari.R3.etunimi,keskusdivari.R3.sukunimi ORDER BY 4 DESC;
+
+
 
 SELECT *
 FROM keskusdivari.R2;
@@ -116,7 +156,7 @@ GROUP By R2all.luokka
 ORDER BY 2 DESC;
 
 
-
+*/
 
 
 

@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Search app</title>
+
+
+</head>
+<body>
+
+    <nav>
+        <ul>
+          <li><a href=''>Koti</a></li>
+          <li><a href='/add_books'>Lisää uusi</a></li>
+          <li><a href='/data'>raw data (json)</a></li>
+        </ul>
+  
+        <form action="/logout" method="POST">
+            <input type="submit" value="Logout">
+        </form>
+    </nav>
+
+     <h1>Haku:</h1>
+    <form action="/search" method="POST">
+        <label for="hakutermi">Hakusana:</label>
+        <input type="text" id="hakutermi" name="hakutermi"><br><br>
+
+        <br> 
+
+        <fieldset>
+            <legend>Valitse hakukohde:</legend>
+            <div>
+            <input type="radio" id="valinta1" name="radAnswer" value="nimi" >
+            <label for="valinta1">Teoksen nimi</label>
+        
+            <input type="radio" id="valinta2" name="radAnswer"  value="tekija" >
+            <label for="valinta2">Teoksen tekijä</label>
+        
+            <input type="radio" id="valinta3" name="radAnswer" value="tyyppi" >
+            <label for="valinta3">Teoksen tyyppi</label>
+
+            <input type="radio" id="valinta4" name="radAnswer"  value="luokka" >
+            <label for="valinta4">Teoksen luokka</label>          
+            
+            </div>
+        </fieldset>
+        <br> 
+        
+        <input type="submit" value="Submit">
+    </form>
+
+
+  {{{body}}}
+
+</body>
+</html>

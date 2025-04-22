@@ -6,20 +6,20 @@
 
 -- ASIAKAS
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
-VALUES (6, 'yrjö', 'ylläpitäjä', 'norsunluutorni 1', 12345, 'Helsinki', 'admin@admin.com', '04069696969', 'admin', 'admin');
+VALUES (1, 'yrjö', 'ylläpitäjä', 'norsunluutorni 1', 12345, 'Helsinki', 'admin@admin.com', '04069696969', 'admin', 'admin');
 
 
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
-VALUES (11, 'maija', 'meikalainen', 'norsu 11', 53212, 'Tampere', 'maija@email.com', '0222222', 'maija', 'asiakas');
+VALUES (2, 'maija', 'meikalainen', 'norsu 11', 53212, 'Tampere', 'maija@email.com', '0222222', 'maija', 'asiakas');
 
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
-VALUES (12, 'marko', 'meika', 'katu 12', 5555, 'Tampere', 'marko@email.com', '0233332', 'marko', 'asiakas');
+VALUES (3, 'marko', 'meika', 'katu 12', 5555, 'Tampere', 'marko@email.com', '0233332', 'marko', 'asiakas');
 
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
-VALUES (13, 'keijo', 'marjakainen', 'katu 134', 444444, 'Turku', 'keijo@email.com', '04444442', 'keijo', 'asiakas');
+VALUES (4, 'keijo', 'marjakainen', 'katu 134', 444444, 'Turku', 'keijo@email.com', '04444442', 'keijo', 'asiakas');
 
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
-VALUES (14, 'testi', 'henkilo', 'kuja 34', 22333, 'Espoo', 'testi@email.com', '0455555542', 'testi', 'asiakas');
+VALUES (5, 'testi', 'henkilo', 'kuja 34', 22333, 'Espoo', 'testi@email.com', '0455555542', 'testi', 'asiakas');
 
 
 

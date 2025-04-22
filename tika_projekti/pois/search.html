@@ -1,0 +1,46 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Reading is fun!</title>
+</head>
+
+<body>
+
+    <h1>Haku:</h1>
+    <form action="/search" method="POST">
+        <label for="hakutermi">Haku:</label>
+        <input type="text" id="hakutermi" name="hakutermi"><br><br>
+
+        <br> 
+
+        <fieldset>
+            <legend>Valitse hakukohde:</legend>
+            <div>
+            <input type="radio" id="valinta1" name="radAnswer" value="nimi" >
+            <label for="valinta1">Teoksen nimi</label>
+        
+            <input type="radio" id="valinta2" name="radAnswer"  value="tekija" >
+            <label for="valinta2">Teoksen tekijä</label>
+        
+            <input type="radio" id="valinta3" name="radAnswer" value="tyyppi" >
+            <label for="valinta3">Teoksen tyyppi</label>
+
+            <input type="radio" id="valinta4" name="radAnswer"  value="luokka" >
+            <label for="valinta4">Teoksen luokka</label>          
+            
+            </div>
+        </fieldset>
+        <br> 
+        
+        <input type="submit" value="Submit">
+    </form>
+
+    <form action="/logout" method="POST">
+    <input type="submit" value="Logout">
+    </form>
+</body>
+
+</html>
