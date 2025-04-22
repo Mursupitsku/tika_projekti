@@ -766,7 +766,7 @@ app.post('/ordered', usersOnly, async(req, res) => {
     console.log("tilaus vahvistettu")
 
     //res.render('orderHome', {tiedot: data } );   
-    res.render('orderHome');  
+    res.render('orderHome', {tilausvahvistus: "Testataan tätä"});  
 });
 
 
