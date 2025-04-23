@@ -94,7 +94,7 @@ client
 	});
 
 
-client.query('SET SEARCH_PATH TO keskusdivari')          
+client.query('SET SEARCH_PATH TO keskusdivari')                             // HUOM! POISTA TÄMÄ, JOLLEI MUUTEN KÄÄNNY
 
 
 
@@ -386,7 +386,7 @@ app.post('/add_books', async (req, res) => {
         client.query('SET SEARCH_PATH TO d1')
         try {
             const books = await client.query('SELECT teos_id, isbn FROM teos')
-            console.log('Query result:', books.rows);
+            //console.log('Query result:', books.rows);
             for(const row of books.rows) {
                 if(row['isbn'] == isbn){
                     isbn_found_omakanta = true;
@@ -407,7 +407,7 @@ app.post('/add_books', async (req, res) => {
     var teos_id;
     try {
         const books = await client.query('SELECT teos_id, isbn FROM teos')
-        console.log('Query result:', books.rows);
+        //console.log('Query result:', books.rows);
         for(const row of books.rows) {
             if(row['isbn'] == isbn){
                 isbn_found = true;
@@ -430,7 +430,7 @@ app.post('/add_books', async (req, res) => {
             try {
                 const result = await client.query(
                     `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${teos_id_omakanta}', ${divari_id})`)
-                console.log('Query result:', result);
+                //console.log('Query result:', result);
             }catch (err){
                 if(divari_oma_kanta){
                     client.query('SET SEARCH_PATH TO keskusdivari')
@@ -694,7 +694,7 @@ app.post('/search', usersOnly, async (req, res) => {
         console.error(err);
         console.log(err);
         //res.json(data);
-        // res.render('searchHome');   !!!!!!!!!!!!! 
+        // res.render('searchHome');   !
     }
 });
 
@@ -868,24 +868,13 @@ app.post('/raporthaku1', adminsOnly, async (req, res) => {
 
 
 // TILAUS --------------------------------------------------------------
-app.get('/order', usersOnly, (req, res) => {              //HUOM!  TÄNNE TEHDÄÄN JOTAIN??         TILAUSHISTORIA!!!!!!!???
+app.get('/order', usersOnly, (req, res) => {              
     let id = res.body;         
     console.log(id)
 
     res.status(200);
     res.render('orderHome');  
-    /*
-    fs.readFile(path.resolve('order.html'), function(error, htmlPage) {
-        if (error) {
-            res.writeHead(404);
-            res.write('An error occured: ', error);
-        } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(htmlPage);
-        }
-        res.end();
-    });
-    */
+
 });
 
 app.post('/order', usersOnly, async (req, res) => {    
