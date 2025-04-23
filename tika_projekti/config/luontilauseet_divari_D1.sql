@@ -24,7 +24,7 @@ SET SEARCH_PATH TO D1;
 
 CREATE TABLE tilaus (
 tilaus_id SERIAL PRIMARY KEY,
-tilauspvm DATE NOT NULL DEFAULT CURRENT_DATE,  
+tilauspvm DATE NOT NULL DEFAULT CURRENT_DATE
 --asiakas_id INT NOT NULL,
 --FOREIGN KEY(asiakas_id) REFERENCES asiakas
 );
@@ -92,7 +92,7 @@ tilaus_id INT,
 teos_id INT NOT NULL,
 --divari_id INT NOT NULL,
 FOREIGN KEY(tilaus_id) REFERENCES tilaus,
-FOREIGN KEY(teos_id) REFERENCES teos,
+FOREIGN KEY(teos_id) REFERENCES teos
 -- FOREIGN KEY(divari_id) REFERENCES divari
 );
 

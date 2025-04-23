@@ -1,3 +1,4 @@
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -79,6 +80,7 @@ const client = new Client({
     host: 'localhost',
 	port: '5432',
 	database: process.env.DATABASE_NAME,
+
 });
 
 
@@ -92,11 +94,10 @@ client
 	});
 
 
-client.query('SET SEARCH_PATH TO keskusdivari')          // !!!!!  //Huom! minulla tämä ei tässä kohtaa toimi / ei käänny //Tarkista onko sinulla keskusdivari niminen schema tietokannassa
+client.query('SET SEARCH_PATH TO keskusdivari')          
 
 
 
-//                                            //Huom! jos nämä "koodin jakajat" ovat turhia/outoja/ei tarvita --> NIIN POISTA
 // Aloitussivu --------------------------------------------- 
 app.get('/', (req, res) => {
     fs.readFile(path.resolve('static/frontpage.html'), function(error, htmlPage) {
@@ -114,7 +115,7 @@ app.get('/', (req, res) => {
 
 
 // Rekisteröinti ---------------------------------------------
-app.get('/register2', (req, res) => {                                     //HUOM! TARVITAANKO??
+app.get('/register2', (req, res) => {                                     
 
     console.log(req.body)                        
 });
@@ -167,15 +168,6 @@ app.post('/register2', async (req, res) => {
         errors.push(POSTALCODE_NOT_NUMBER)
     }
 
-    // client
-	// .connect()
-	// .then(() => {
-	// 	console.log('Connected to PostgreSQL database register');
-	// })
-	// .catch((err) => {
-	// 	console.error('Error connecting to PostgreSQL database register', err);
-	// });
-
     var last_id;
     try {
         const emails = await client.query('SELECT asiakas_id, email FROM asiakas')
@@ -196,9 +188,7 @@ app.post('/register2', async (req, res) => {
     }catch (err){
         console.error(err);
     }
-    // finally{
-    //     await client.end()
-    // }
+
 
     if(errors.length > 0) {
         req.session.errors = errors
@@ -233,7 +223,6 @@ app.post('/register2', async (req, res) => {
 app.get('/login', (req, res) => {
     const errors = req.session.errors || [];
     delete req.session.errors;
-    //console.log(errors);
 
     fs.readFile(path.resolve('static/login.html'), function(error, htmlPage) {
         if (error) {
@@ -256,8 +245,7 @@ app.post('/login', async (req, res) => {
 
     const { email, password } = req.body;
     const user = { email, password}
-
-    
+  
     if(!user.email || user.email.trim() === ''){
         errors.push(ERROR_EMAIL_MISSING)
     }

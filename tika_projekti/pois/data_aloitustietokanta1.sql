@@ -3,7 +3,6 @@
 -- testitarkoitus
 
 
-
 -- ASIAKAS
 INSERT INTO asiakas (asiakas_id, etunimi, sukunimi, katuosoite, postinumero, postitoimipaikka, email, puhelin, salasana, rooli) 
 VALUES (6, 'yrjö', 'ylläpitäjä', 'norsunluutorni 1', 12345, 'Helsinki', 'admin@admin.com', '04069696969', 'admin', 'admin');
@@ -160,6 +159,37 @@ INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id)
 VALUES (7, 6);
 
 
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (8, 7);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (8, 2);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (8, 3);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (9, 6);
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (9, 3);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (10, 3);
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (10, 1);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (11, 4);
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (11, 5);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (12, 3);
+
+INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) 
+VALUES (12, 6);
+
+
 -- TEOSTYYPPI
 INSERT INTO teostyyppi (teostyyppi_id, tyyppi) 
 VALUES (1, 'romaani');
@@ -191,7 +221,15 @@ INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id)
 VALUES (4, 1);
 
 INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (4, 3);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (4, 4);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
 VALUES (5, 2);
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (5, 3);
 
 INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
 VALUES (6, 3);
@@ -199,8 +237,31 @@ VALUES (6, 3);
 INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
 VALUES (7, 4);
 
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (7, 1);
 
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (8, 3);
 
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (9, 1);
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (9, 2);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (10, 4);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (11, 2);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (11, 3);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (12, 2);
+
+INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) 
+VALUES (12, 4);
 
 
 -- DIVARI
@@ -215,7 +276,6 @@ VALUES (3, 'simon kauppa', 'simola 12', 'www.simonkauppa.fi', FALSE );
 
 INSERT INTO divari (divari_id, nimi, osoite, web_sivu, oma_tietokanta) 
 VALUES (4, 'pertin divari', 'jokukatu 12', NULL, FALSE );
-
 
 
 
