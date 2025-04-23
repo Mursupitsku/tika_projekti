@@ -392,8 +392,27 @@ app.post('/add_books', async (req, res) => {
         return res.redirect('/add_books')
     }
 
+    var isbn_found_omakanta = false;
+    var teos_id_omakanta;
     if(divari_oma_kanta){
         client.query('SET SEARCH_PATH TO d1')
+        try {
+            const books = await client.query('SELECT teos_id, isbn FROM teos')
+            console.log('Query result:', books.rows);
+            for(const row of books.rows) {
+                if(row['isbn'] == isbn){
+                    isbn_found_omakanta = true;
+                    teos_id_omakanta = row['teos_id'];
+                }
+            };
+        }catch (err){
+            if(divari_oma_kanta){
+                client.query('SET SEARCH_PATH TO keskusdivari')
+            }
+            console.error(err);
+    
+        }
+        client.query('SET SEARCH_PATH TO keskusdivari')
     }
 
     var isbn_found = false;
@@ -415,6 +434,100 @@ app.post('/add_books', async (req, res) => {
 
     }
 
+    //Omaan kantaan lisäys
+    if(oma_tietokanta){
+        client.query('SET SEARCH_PATH TO d1')
+        if(isbn_found_omakanta){
+            //Teoksen isbn oli jo tietokannassa. Täytyy lisätä vain nide
+            try {
+                const result = await client.query(
+                    `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${teos_id_omakanta}', ${divari_id})`)
+                console.log('Query result:', result);
+            }catch (err){
+                if(divari_oma_kanta){
+                    client.query('SET SEARCH_PATH TO keskusdivari')
+                }
+                console.error(err);
+                errors.push(err)
+                req.session.errors = errors
+                return res.redirect('/add_books')
+            }
+        }else{
+            //Teoksen isbn:ää ei ollut tietokannassa. Täytyy lisätä teos ja nide tietokantaan
+            //Tarkistetaan onko annettu luokka, tyyppi, tekijä, paino
+            if(luokka_id <= 0){
+                errors.push(LUOKKA_MISSING)
+            }
+            if(tyyppi_id <= 0){
+                errors.push(TYYPPI_MISSING)
+            }
+            if(!tekija || tekija.trim() === ''){
+                errors.push(BUYPRICE_MISSING)
+            }
+            if(!paino || paino.trim() === ''){
+                errors.push(WEIGHT_MISSING)
+            }
+    
+            if(errors.length > 0) {
+                req.session.errors = errors
+                if(divari_oma_kanta){
+                    client.query('SET SEARCH_PATH TO keskusdivari')
+                }
+                return res.redirect('/add_books')
+            }
+    
+            //Lisätään teos
+            var inserted_teos_id;
+            try {
+                const result = await client.query(
+                    `INSERT INTO teos (nimi, tekija, isbn, paino) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}') RETURNING teos_id`)
+                inserted_teos_id = result.rows[0]['teos_id']
+            }catch (err){
+                if(divari_oma_kanta){
+                    client.query('SET SEARCH_PATH TO keskusdivari')
+                }
+                console.error(err);
+                errors.push(err)
+                req.session.errors = errors
+                return res.redirect('/add_books')
+            }
+            
+            //Lisätään teos luokka ja tyyppi tauluihin
+            try {
+                const luokkaresult = await client.query(
+                    `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka_id}) RETURNING teos_id`)
+                const tyyppiresult = await client.query(
+                    `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tyyppi_id}') RETURNING teos_id`)
+                }catch (err){
+                    if(divari_oma_kanta){
+                        client.query('SET SEARCH_PATH TO keskusdivari')
+                    }
+                    console.error(err);
+                    errors.push(err)
+                    req.session.errors = errors
+                    return res.redirect('/add_books')
+            }
+    
+            //Lisätään nide
+            try {
+                const result = await client.query(
+                    `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
+            }catch (err){
+                if(divari_oma_kanta){
+                    client.query('SET SEARCH_PATH TO keskusdivari')
+                }
+                console.error(err);
+                errors.push(err)
+                req.session.errors = errors
+                return res.redirect('/add_books')
+            }
+    
+    
+        }
+        client.query('SET SEARCH_PATH TO keskusdivari')
+    }
+
+    //keskusdivariin lisäys
     if(isbn_found){
         //Teoksen isbn oli jo tietokannassa. Täytyy lisätä vain nide
         try {
