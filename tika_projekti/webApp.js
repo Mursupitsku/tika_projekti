@@ -24,6 +24,7 @@ const jsonToCsv = require(__dirname + '/funktiot/jsonToCsv');
 
 const ERROR_EMAIL_MISSING = 'Sähköposti vaaditaan!';
 const ERROR_PASSWORD_MISSING = 'Salasana vaaditaan!';
+const POSTALCODE_NOT_NUMBER = 'Postinumero ei ole numeromuodossa!';
 const EMAIL_NOT_FOUND = 'Sähköpostia ei löytynyt. Tarkista sähköposti tai rekisteröidy.';
 const INCORRECT_PASSWORD = 'Väärä salasana';
 const ADMIN_ONLY = 'Kirjaudu ylläpitäjänä päästäksesi tälle sivulle';
@@ -91,7 +92,7 @@ client
 	});
 
 
-//client.query('SET SEARCH_PATH TO keskusdivari')          // !!!!!  //Huom! minulla tämä ei tässä kohtaa toimi / ei käänny
+client.query('SET SEARCH_PATH TO keskusdivari')          // !!!!!  //Huom! minulla tämä ei tässä kohtaa toimi / ei käänny //Tarkista onko sinulla keskusdivari niminen schema tietokannassa
 
 
 
@@ -162,6 +163,9 @@ app.post('/register2', async (req, res) => {
     if(!newUser.password || newUser.password.trim() === ''){
         errors.push(ERROR_PASSWORD_MISSING)
     }
+    if(!Number.isInteger(parseInt(postinumero))){
+        errors.push(POSTALCODE_NOT_NUMBER)
+    }
 
     // client
 	// .connect()
@@ -211,9 +215,6 @@ app.post('/register2', async (req, res) => {
         req.session.errors = errors
         return res.redirect('/register')
     }
-    // finally{
-    //     await client.end()
-    // }
 
     //Generate a unique id for the new user, you can use uuid()
     user_id = uuid()
@@ -270,10 +271,8 @@ app.post('/login', async (req, res) => {
     }
 
 
-    //var password_correct = false;
     var email_found = false;
     var role
-    //var databaseUserId
     try {
         const emails_n_users = await client.query('SELECT email, salasana, rooli, asiakas_id FROM asiakas')
 
@@ -285,8 +284,6 @@ app.post('/login', async (req, res) => {
                     req.session.errors = [INCORRECT_PASSWORD]
                     return res.redirect('/login')
                 }
-                //errors.push(ERROR_EMAIL_IN_USE)
-                //req.session.errors = [ERROR_EMAIL_IN_USE]
                 email_found = true;
                 role = row['rooli']
                 user.databaseId = row['asiakas_id']
@@ -295,10 +292,6 @@ app.post('/login', async (req, res) => {
     }catch (err){
         console.error(err);
     }
-    // finally{
-    //     await client.end()
-    // }
-    // await client.end()
 
 
     if(!email_found){
@@ -314,7 +307,6 @@ app.post('/login', async (req, res) => {
     }else{
         user.role = "user"
     }
-    //user.role = "user"
 
     req.session.user = user;
 
@@ -346,14 +338,9 @@ app.post('/add_books', async (req, res) => {
     let errors = [];
 
     var {dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta} = req.body;
-    //const book = { nimi, isbn, tekija, tyyppi, luokka, paino, ohinta, mhinta}
-    console.log(dnimi, nimi, isbn, tekija, tyyppi_id, luokka_id, paino, ohinta, mhinta);
-
 
     ohinta = parseFloat(ohinta);
     mhinta = parseFloat(mhinta);
-    //tyyppi_id = parseInt(tyyppi_id);
-    //luokka_id = parseInt(luokka_id);
 
 
     if(!dnimi || dnimi.trim() === ''){
@@ -368,13 +355,12 @@ app.post('/add_books', async (req, res) => {
     if(mhinta <= 0){
         errors.push(SELLPRICE_MISSING)
     }
-    // if(!ohinta || ohinta.trim() === ''){
-    //     errors.push(BUYPRICE_MISSING)
-    // }
-    // if(!mhinta || mhinta.trim() === ''){
-    //     errors.push(SELLPRICE_MISSING)
-    // }
-
+    if(!nimi || nimi.trim() === ''){
+        errors.push(TEOS_NAME_MISSING)
+    }
+    if(!tekija || tekija.trim() === ''){
+        errors.push(AUTHOR_MISSING)
+    }
 
     if(errors.length > 0) {
         req.session.errors = errors
@@ -399,8 +385,6 @@ app.post('/add_books', async (req, res) => {
         console.error(err);
     }
 
-    console.log(divari_oma_kanta)
-    console.log(divari_found)
 
     if(!divari_found){
         errors.push(DIVARI_NOT_FOUND)
@@ -415,16 +399,10 @@ app.post('/add_books', async (req, res) => {
     var isbn_found = false;
     var teos_id;
     try {
-        
         const books = await client.query('SELECT teos_id, isbn FROM teos')
         console.log('Query result:', books.rows);
         for(const row of books.rows) {
-            console.log(row);
-            console.log("forloop");
-            console.log(row['teos_id']);
-            console.log(row['isbn']);
             if(row['isbn'] == isbn){
-                console.log("iffi");
                 isbn_found = true;
                 teos_id = row['teos_id'];
             }
@@ -479,10 +457,8 @@ app.post('/add_books', async (req, res) => {
         //Lisätään teos
         var inserted_teos_id;
         try {
-            console.log(nimi, tekija, isbn, paino, luokka_id, tyyppi_id);
             const result = await client.query(
                 `INSERT INTO teos (nimi, tekija, isbn, paino) VALUES ('${nimi}', '${tekija}', '${isbn}', '${paino}') RETURNING teos_id`)
-            console.log('Query result:', result);
             inserted_teos_id = result.rows[0]['teos_id']
         }catch (err){
             if(divari_oma_kanta){
@@ -498,10 +474,8 @@ app.post('/add_books', async (req, res) => {
         try {
             const luokkaresult = await client.query(
                 `INSERT INTO kuuluuluokkaan (teos_id, teosluokka_id) VALUES (${inserted_teos_id}, ${luokka_id}) RETURNING teos_id`)
-            console.log('Query result:', luokkaresult);
             const tyyppiresult = await client.query(
                 `INSERT INTO kuuluutyyppiin (teos_id, teostyyppi_id) VALUES (${inserted_teos_id}, '${tyyppi_id}') RETURNING teos_id`)
-            console.log('Query result:', tyyppiresult);
             }catch (err){
                 if(divari_oma_kanta){
                     client.query('SET SEARCH_PATH TO keskusdivari')
@@ -516,7 +490,6 @@ app.post('/add_books', async (req, res) => {
         try {
             const result = await client.query(
                 `INSERT INTO nide (myyntihinta, niteen_tila, sisaanostohinta, teos_id, divari_id) VALUES (${mhinta}, 'myynnissä', '${ohinta}', '${inserted_teos_id}', ${divari_id})`)
-            console.log('Query result:', result);
         }catch (err){
             if(divari_oma_kanta){
                 client.query('SET SEARCH_PATH TO keskusdivari')
@@ -855,7 +828,6 @@ app.post('/ordered', usersOnly, async(req, res) => {
 
         const result = await client.query(
             `INSERT INTO tilaus (asiakas_id) VALUES (${req.session.user.databaseId}) RETURNING tilaus_id`)
-        console.log(result)
         client.query(`UPDATE nide SET niteen_tila='myyty', tilaus_id=${result.rows[0]['tilaus_id']}, myyntipvm=current_date WHERE nide_id = ${req.body.postId}`)   
 
     }catch (err){
